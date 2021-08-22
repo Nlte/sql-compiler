@@ -19,5 +19,11 @@ int main(int argc, char *argv[]) {
     };
 
     std::cout << root << std::endl;
+
+    // ColumnRef *ref1 = new ColumnRef("media.name");
+    // ColumnRef *ref2 = new ColumnRef("media.description");
+    // Predicate *pred = new Predicate(ref1, "<", ref2);
+
+    // std::cout << pred << std::endl;
     return 0;
 }

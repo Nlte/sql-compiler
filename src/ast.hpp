@@ -111,6 +111,55 @@ class From {
     }
 };
 
+
+
+class Predicate {
+    public:
+        ScalarExpression* left_;
+        std::string comparator_;
+        ScalarExpression* right_;
+
+        Predicate(ScalarExpression* left,
+                  const std::string& comp,
+                  ScalarExpression* right):
+            left_(left),
+            comparator_(comp),
+            right_(right)
+
+        { }
+
+    private:
+    friend std::ostream &operator<<(std::ostream &os, const Predicate *p) {
+        os << "{\n";
+        os << "\"left\":";
+        os << p->left_ << ",\n";
+        os << "\"comparator\":";
+        os << "\"" << p->comparator_ << "\",\n";
+        os << "\"right\":";
+        os << p->right_ << ",\n";
+        os << "}\n";
+        return os;
+    }
+
+
+};
+
+
+class Where {
+    public:
+        Where() { }
+        std::vector<Predicate*> predicates;
+
+    private:
+    friend std::ostream &operator<<(std::ostream &os, const Where *w) {
+        os << "[\n";
+        std::size_t i = 0;
+        os << "]\n";
+        return os;
+    }
+
+};
+
 class Query {
 
     public:

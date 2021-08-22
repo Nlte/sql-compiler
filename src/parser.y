@@ -134,7 +134,7 @@ table_exp:
                         $<from>$ = $<from>1;
                         std::cout << "table_exp: num tables: " << $<from>1->tables.size() << '\n';
                 }
-                /* opt_where_clause */
+                opt_where_clause
                 /* opt_group_by_clause */
         ;
 

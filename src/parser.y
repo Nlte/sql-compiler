@@ -34,7 +34,7 @@ void yyerror(const char*);
         From *from;
         Table *table;
         std::vector<ScalarExpression*> *scalarexpvec;
-
+        std::vector<Table*> *tablevec;
 }
 
 %token NAME
@@ -72,12 +72,13 @@ column_commalist:
         ;
 
 select_statement:
-                SELECT selection table_exp {
-                        $<query>$ = new Query();
-                        $<query>$->select = $<select>2;
-                        $<query>$->from=$<from>3;
-                        root = $<query>$;
-                }
+        SELECT selection
+        FROM table_exp {
+                $<query>$ = new Query();
+                $<query>$->select = $<select>2;
+                $<query>$->from=$<from>4;
+                root = $<query>$;
+        }
         ;
 
 selection:
@@ -103,8 +104,12 @@ scalar_exp:
 
 column_ref:
                 NAME
-        |       NAME '.' NAME /* table.column */
-        |       NAME '.' NAME '.' NAME /* schema.table.column */
+        |       NAME '.' NAME /* table.column */ {
+                $<sval>$ = new std::string(*$<sval>1 + '.' + *$<sval>3);
+        }
+        |       NAME '.' NAME '.' NAME /* schema.table.column */ {
+                $<sval>$ = new std::string(*$<sval>1 + '.' + *$<sval>3 + '.' + *$<sval>5);
+        }
         ;
 
 binary_op:
@@ -134,23 +139,21 @@ table_exp:
                         $<from>$ = $<from>1;
                         std::cout << "table_exp: num tables: " << $<from>1->tables.size() << '\n';
                 }
-                opt_where_clause
-                /* opt_group_by_clause */
         ;
 
 from_clause:
-                FROM table_ref_commalist {
-                        $<from>$ = $<from>2;
+                table_ref_commalist {
+                        $<from>$ = new From(*$<tablevec>1);
                 }
         ;
 
 table_ref_commalist:
                 table_ref {
-                        $<from>$ = new From();
-                        $<from>$->tables.push_back($<table>1);
+                        $<tablevec>$ = new std::vector<Table*>();
+                        $<tablevec>$->push_back($<table>1);
                 }
         |       table_ref_commalist ',' table_ref {
-                        $<from>1->tables.push_back($<table>3);
+                        $<tablevec>$->push_back($<table>3);
                 }
         ;
 
@@ -171,7 +174,9 @@ table_ref:
 
 table:
                 NAME
-        |       NAME '.' NAME /* schema.table */
+        |       NAME '.' NAME /* schema.table */ {
+                $<sval>$ = new std::string(*$<sval>1 + '.' + *$<sval>3);
+        }
         ;
 
 column:
@@ -184,7 +189,7 @@ opt_where_clause:
         ;
 
 where_clause:
-                WHERE search_condition
+                search_condition
         ;
 
         /*  search conditions */

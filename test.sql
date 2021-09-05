@@ -1,3 +1,3 @@
-SELECT time, number, no, yes
-FROM flights AS fo, customers, prices, abcd
-WHERE col > 2
+SELECT scheme.fo.time, fo.number, no, yes
+FROM flights AS fo, scheme.customers, prices prx, abcd
+-- WHERE col > 2

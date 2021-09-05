@@ -97,6 +97,12 @@ class From {
     public:
     std::vector<Table *> tables;
 
+    From(std::vector<Table*> &vec) {
+        for (size_t i = 0; i < vec.size(); ++i) {
+            tables.push_back(vec[i]);
+        }
+    }
+
     private:
     friend std::ostream &operator<<(std::ostream &os, const From *f) {
         os << "[\n";

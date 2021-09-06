@@ -33,8 +33,12 @@ void yyerror(const char*);
         ColumnRef *columnref;
         From *from;
         Table *table;
+        Predicate *predicate;
+        Condition *condition;
+        Where *where;
         std::vector<ScalarExpression*> *scalarexpvec;
         std::vector<Table*> *tablevec;
+        std::vector<Condition*> *conditionvec;
 }
 
 %token NAME
@@ -73,10 +77,12 @@ column_commalist:
 
 select_statement:
         SELECT selection
-        FROM table_exp {
+        FROM table_exp
+        opt_where_clause {
                 $<query>$ = new Query();
                 $<query>$->select = $<select>2;
-                $<query>$->from=$<from>4;
+                $<query>$->from = $<from>4;
+                $<query>$->where = $<where>5;
                 root = $<query>$;
         }
         ;
@@ -137,7 +143,6 @@ literal:
 table_exp:
                 from_clause {
                         $<from>$ = $<from>1;
-                        std::cout << "table_exp: num tables: " << $<from>1->tables.size() << '\n';
                 }
         ;
 
@@ -185,21 +190,42 @@ column:
 
 opt_where_clause:
                 /* empty */
-        |       where_clause
+        |       WHERE where_clause {
+                // TODO Where clause from vector of cond
+        }
         ;
 
+
 where_clause:
-                search_condition
+        search_condition {
+                // TODO vector
+        }
         ;
 
         /*  search conditions */
 
 search_condition:
-        |       search_condition OR search_condition
-        |       search_condition AND search_condition
+        |       search_condition OR search_condition {
+                        $<condition>$ = new Condition(
+                                $<condition>1,
+                                *$<sval>2,
+                                $<condition>3
+                        );
+                }
+        |       search_condition AND search_condition {
+                        $<condition>$ = new Condition(
+                                $<condition>1,
+                                *$<sval>2,
+                                $<condition>3
+                        );
+                }
         |       NOT search_condition
         |       '(' search_condition ')'
-        |       predicate
+        |       predicate {
+                        std::cout << "creating condition predicate" << std::endl;
+                        $<condition>$ = new Condition($<predicate>1);
+                        std::cout << "created condition predicate" << std::endl;
+                }
         ;
 
 predicate:
@@ -207,7 +233,9 @@ predicate:
         ;
 
 comparison_predicate:
-                scalar_exp COMPARISON scalar_exp
+        scalar_exp COMPARISON scalar_exp {
+                $<predicate>$ = new Predicate($<scalarexp>1, *$<sval>2, $<scalarexp>3);
+        }
         ;
 
 opt_group_by_clause:

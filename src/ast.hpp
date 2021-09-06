@@ -117,8 +117,6 @@ class From {
     }
 };
 
-
-
 class Predicate {
     public:
         ScalarExpression* left_;
@@ -131,7 +129,6 @@ class Predicate {
             left_(left),
             comparator_(comp),
             right_(right)
-
         { }
 
     private:
@@ -151,16 +148,79 @@ class Predicate {
 };
 
 
-class Where {
+class Condition {
+
     public:
-        Where() { }
-        std::vector<Predicate*> predicates;
+        Condition():
+            predicate_(nullptr),
+            left_(nullptr),
+            logical_op_(""),
+            right_(nullptr)
+        { }
+
+        Condition(Predicate *p):
+            predicate_(p),
+            left_(nullptr),
+            logical_op_(""),
+            right_(nullptr)
+        { }
+
+        Condition(Condition *left, std::string& logical_op, Condition* right):
+            predicate_(nullptr),
+            left_(left),
+            logical_op_(logical_op),
+            right_(right)
+        { }
+
+        Condition* left() const {
+            if (left_ == nullptr) {
+                throw std::runtime_error("Condition: left condition is null");
+            }
+            return left_;
+        }
+
+        Condition* right() const {
+            if (right_ == nullptr) {
+                throw std::runtime_error("Condition: right condition is null");
+            }
+            return right_;
+        }
+
+        Predicate* predicate() const {
+            if (predicate_ == nullptr) {
+                throw std::runtime_error("Condition: predicate is null");
+            }
+            return predicate_;
+        }
 
     private:
+    Predicate *predicate_;
+    Condition *left_;
+    std::string logical_op_;
+    Condition *right_;
+
+
+};
+
+
+
+class Where {
+    /*
+    ** Where is a binary tree of condition. Root node = last logical combination.
+    */
+    public:
+        Where() { }
+        Where(Condition *root):
+            root_(root)
+        { }
+
+    private:
+    Condition *root_;
     friend std::ostream &operator<<(std::ostream &os, const Where *w) {
-        os << "[\n";
-        std::size_t i = 0;
-        os << "]\n";
+        Condition *current = w->root_;
+        if (current->predicate() != nullptr) {
+            os << current->predicate();
+        }
         return os;
     }
 
@@ -172,14 +232,18 @@ class Query {
     Query() : select(nullptr), from(nullptr) {}
     Select *select;
     From *from;
+    Where *where;
 
     private:
+
     friend std::ostream &operator<<(std::ostream &os, const Query *q) {
         os << "{\n";
         os << "\"Select\":";
         os << q->select;
         os << "\"From\":";
         os << q->from;
+        os << "\"Where\":";
+        os << q->where;
         os << "}\n";
         return os;
     }

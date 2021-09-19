@@ -145,7 +145,7 @@ class Predicate {
     private:
     friend std::ostream &operator<<(std::ostream &os, const Predicate *p) {
         os << "{\n";
-        os << "\"left\":" << std::endl;
+        os << "\"left\":";
         os << p->left_ << ",\n";
         os << "\"comparator\":";
         os << "\"" << p->comparator_ << "\",\n";
@@ -235,8 +235,8 @@ class Query {
         os << q->select;
         os << "\"From\":";
         os << q->from;
-        os << "\"Where\":";
         if (q->where != nullptr) {
+            os << "\"Where\":";
             os << q->where;
         }
         os << "}\n";

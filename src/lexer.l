@@ -1,5 +1,5 @@
 %{
-/* #include <stdio.h> */
+    /* #include <stdio.h> */
 #include <string.h>
 #include <iostream>
 #include <string>
@@ -11,9 +11,9 @@
 #define TOKEN_STR(t, val) (yylval.token = t; yylval.sval = new std::string(yytext); )
 #define TOKEN_INT(t, val) (yylval.token = t; yylval.ival = std::atoi(yytext); )
 #define TOKEN_DOUBLE(t, val) (yylval.token = t; yylval.dval = std::atof(yytext); )
-int yyparse();
-void yyerror(const char*);
-/* extern "C" int yywrap() { } */
+    int yyparse();
+    void yyerror(const char*);
+    /* extern "C" int yywrap() { } */
 
 %}
 
@@ -47,17 +47,22 @@ AS { SAVE_TOKEN; return AS; }
 
 
     /* numbers */
-[0-9]+ |
-[0-9]+"."[0-9]* |
-"."[0-9]* { return INTNUM; }
+[0-9]+ { yylval.ival = std::atoi(yytext); return INTNUM; }
 
+[0-9]+"."[0-9]* |
+"."[0-9]* |
 [0-9]+[eE][+-]?[0-9]+ |
 [0-9]+"."[0-9]*[eE][+-]?[0-9]+ |
-"."[0-9]*[eE][+-]?[0-9]+ { return APPROXNUM; }
+"."[0-9]*[eE][+-]?[0-9]+ { yylval.dval = std::atof(yytext); return APPROXNUM; }
 
 
     /* strings */
-\"([^\\\"]|\\.)*\"  { return STRING; }
+\"([^\\\"]|\\.)*\"  {
+    std::string raw = std::string(yytext);
+    // Remove the quotes
+    std::string trimmed = raw.substr(1, raw.length() - 2);
+    yylval.sval = new std::string(trimmed); return STRING;
+}
 
 '[^'\n]*$ { yyerror("Unterminated string"); }
 
@@ -78,30 +83,3 @@ void yyerror(const char *s)
 {
     printf("%d: %s at %s\n", yylineno, s, yytext);
 }
-
-/* int main(int argc, char ** argv) */
-/* { */
-/*     if (argc > 1 && (yyin = fopen(argv[1], "r")) == NULL) { */
-/*         perror(argv[1]); */
-/*         exit(1); */
-/*     } */
-
-/*     if(!yyparse()) { */
-/*         std::cout << "SQL parsed successfully" << std::endl; */
-/*         if (query->from == nullptr) { */
-/*             std::cout << "from field is null" << std::endl; */
-/*         } */
-
-/*         if (query->select == nullptr) { */
-/*             std::cout << "select field is null" << std::endl; */
-/*         } */
-/*         else { */
-/*             std::cout << "select field is not null" << std::endl; */
-/*         } */
-/*     } else { */
-/*         std::cout << "SQL parsing error" << std::endl; */
-/*     } */
-
-
-/*     return 0; */
-/* } */

@@ -1,5 +1,8 @@
 #include "ast.hpp"
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 extern FILE *yyin;
 extern int yyparse();
@@ -17,6 +20,17 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout << "SQL parsing error" << std::endl;
     };
+    fclose(yyin);
+
+    std::stringstream str_stream;
+    std::ifstream f(argv[1]);
+    if (f.is_open()) {
+        str_stream << f.rdbuf();
+        std::string str = str_stream.str();
+        std::cout << "Query\n\n";
+        std::cout << str << std::endl;
+        std::cout << "\n\n";
+    }
 
     std::cout << root << std::endl;
 

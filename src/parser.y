@@ -31,6 +31,7 @@ void yyerror(const char*);
         Select *select;
         ScalarExpression *scalarexp;
         ColumnRef *columnref;
+        Atom *atom;
         From *from;
         Table *table;
         Predicate *predicate;
@@ -47,6 +48,7 @@ void yyerror(const char*);
 
 %type   <sval>          table_ref
 %type   <sval>          NAME
+%type   <sval>          STRING
 %type   <ival>          INTNUM
 %type   <dval>          APPROXNUM
 
@@ -103,13 +105,21 @@ scalar_exp_commalist:
         ;
 
 scalar_exp:
-                column_ref { $<columnref>$ = new ColumnRef(*$<sval>1); }
-        |       binary_op
-        |       atom
+        column_ref {
+                $<columnref>$ = new ColumnRef(*$<sval>1);
+        }
+        |       binary_op {
+            // TODO
+        }
+        |       atom {
+                $<atom>$ = $<atom>1;
+        }
         ;
 
 column_ref:
-                NAME
+        NAME {
+                $<sval>$ = new std::string(*$<sval>1);
+        }
         |       NAME '.' NAME /* table.column */ {
                 $<sval>$ = new std::string(*$<sval>1 + '.' + *$<sval>3);
         }
@@ -129,14 +139,18 @@ binary_op:
         |       scalar_exp '/' scalar_exp
         ;
 
+
 atom:
-                literal
-        ;
 
-literal:
-
-        |       INTNUM
-        |       APPROXNUM
+                INTNUM {
+            $<atom>$ = new Atom(std::to_string($1), "int64");
+        }
+        |       APPROXNUM {
+            $<atom>$ = new Atom(std::to_string($1), "float64");
+        }
+        |       STRING {
+            $<atom>$ = new Atom(*$<sval>1, "string");
+        }
         ;
 
 
@@ -165,15 +179,12 @@ table_ref_commalist:
 table_ref:
                 table {
                         $<table>$ = new Table(*$<sval>1);
-                        std::cout << "in table" << std::endl;
                 }
         |       table NAME {
                         $<table>$ = new Table(*$<sval>1, *$<sval>2);
-                        std::cout << "in table NAME" << std::endl;
                 }
         |       table AS NAME {
                         $<table>$ = new Table(*$<sval>1, *$<sval>3);
-                        std::cout << "in table AS NAME" << std::endl;
                 }
         ;
 
@@ -189,21 +200,15 @@ column:
         ;
 
 opt_where_clause:
-                /* empty */
-        |       WHERE where_clause {
-                // TODO Where clause from vector of cond
-        }
-        ;
-
-
-where_clause:
-        search_condition {
-                // TODO vector
+                /* empty */ {
+                $<where>$ = nullptr;
+                }
+        |       WHERE search_condition {
+                    $<where>$ = new Where($<condition>2);
         }
         ;
 
         /*  search conditions */
-
 search_condition:
         |       search_condition OR search_condition {
                         $<condition>$ = new Condition(
@@ -221,20 +226,15 @@ search_condition:
                 }
         |       NOT search_condition
         |       '(' search_condition ')'
-        |       predicate {
-                        std::cout << "creating condition predicate" << std::endl;
+        |       comparison_predicate {
                         $<condition>$ = new Condition($<predicate>1);
-                        std::cout << "created condition predicate" << std::endl;
                 }
-        ;
-
-predicate:
-                comparison_predicate
         ;
 
 comparison_predicate:
         scalar_exp COMPARISON scalar_exp {
-                $<predicate>$ = new Predicate($<scalarexp>1, *$<sval>2, $<scalarexp>3);
+                Predicate *p = new Predicate($<scalarexp>1, *$<sval>2, $<scalarexp>3);
+                $<predicate>$ = p;
         }
         ;
 

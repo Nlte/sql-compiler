@@ -17,9 +17,11 @@ class Expression {
 
 class ScalarExpression : public Expression {
     public:
-    ScalarExpression(const std::string &type) : type_(type) {}
+    ScalarExpression(const std::string &type, const std::string &dtype)
+        : type_(type), dtype_(dtype) {}
 
     const std::string type() const { return type_; }
+    const std::string dtype() const { return dtype_; }
     virtual const std::string value() const = 0;
 
     private:
@@ -27,22 +29,35 @@ class ScalarExpression : public Expression {
                                     const ScalarExpression *s) {
         os << "{\n";
         os << "\"type\":\"" << s->type() << "\",\n";
+        os << "\"dtype\":\"" << s->dtype() << "\",\n";
         os << "\"value\":\"" << s->value() << "\"\n";
         os << "}\n";
         return os;
     }
     std::string type_;
+    std::string dtype_;
 };
 
 class ColumnRef : public ScalarExpression {
     public:
     ColumnRef(const std::string &name)
-        : ScalarExpression("ColumnRef"), name_(name) {}
+        : ScalarExpression("ColumnRef", "string"), name_(name) {}
 
     const std::string value() const { return name_; }
 
     private:
     std::string name_;
+};
+
+class Atom : public ScalarExpression {
+    public:
+    Atom(const std::string &value, const std::string &dtype)
+        : ScalarExpression("Atom", dtype), value_(value) {}
+
+    const std::string value() const { return value_; }
+
+    private:
+    std::string value_;
 };
 
 class Table {
@@ -97,7 +112,7 @@ class From {
     public:
     std::vector<Table *> tables;
 
-    From(std::vector<Table*> &vec) {
+    From(std::vector<Table *> &vec) {
         for (size_t i = 0; i < vec.size(); ++i) {
             tables.push_back(vec[i]);
         }
@@ -119,22 +134,18 @@ class From {
 
 class Predicate {
     public:
-        ScalarExpression* left_;
-        std::string comparator_;
-        ScalarExpression* right_;
+    ScalarExpression *left_;
+    std::string comparator_;
+    ScalarExpression *right_;
 
-        Predicate(ScalarExpression* left,
-                  const std::string& comp,
-                  ScalarExpression* right):
-            left_(left),
-            comparator_(comp),
-            right_(right)
-        { }
+    Predicate(ScalarExpression *left, const std::string &comp,
+              ScalarExpression *right)
+        : left_(left), comparator_(comp), right_(right) {}
 
     private:
     friend std::ostream &operator<<(std::ostream &os, const Predicate *p) {
         os << "{\n";
-        os << "\"left\":";
+        os << "\"left\":" << std::endl;
         os << p->left_ << ",\n";
         os << "\"comparator\":";
         os << "\"" << p->comparator_ << "\",\n";
@@ -143,99 +154,81 @@ class Predicate {
         os << "}\n";
         return os;
     }
-
-
 };
-
 
 class Condition {
 
     public:
-        Condition():
-            predicate_(nullptr),
-            left_(nullptr),
-            logical_op_(""),
-            right_(nullptr)
-        { }
+    Condition()
+        : predicate_(nullptr), left_(nullptr), logical_op_(""),
+          right_(nullptr) {}
 
-        Condition(Predicate *p):
-            predicate_(p),
-            left_(nullptr),
-            logical_op_(""),
-            right_(nullptr)
-        { }
+    Condition(Predicate *p)
+        : predicate_(p), left_(nullptr), logical_op_(""), right_(nullptr) {}
 
-        Condition(Condition *left, std::string& logical_op, Condition* right):
-            predicate_(nullptr),
-            left_(left),
-            logical_op_(logical_op),
-            right_(right)
-        { }
+    Condition(Condition *left, std::string &logical_op, Condition *right)
+        : predicate_(nullptr), left_(left), logical_op_(logical_op),
+          right_(right) {}
 
-        Condition* left() const {
-            if (left_ == nullptr) {
-                throw std::runtime_error("Condition: left condition is null");
-            }
-            return left_;
+    Condition *left() const {
+        if (left_ == nullptr) {
+            throw std::runtime_error("Condition: left condition is null");
         }
+        return left_;
+    }
 
-        Condition* right() const {
-            if (right_ == nullptr) {
-                throw std::runtime_error("Condition: right condition is null");
-            }
-            return right_;
+    Condition *right() const {
+        if (right_ == nullptr) {
+            throw std::runtime_error("Condition: right condition is null");
         }
+        return right_;
+    }
 
-        Predicate* predicate() const {
-            if (predicate_ == nullptr) {
-                throw std::runtime_error("Condition: predicate is null");
-            }
-            return predicate_;
+    Predicate *predicate() const {
+        if (predicate_ == nullptr) {
+            throw std::runtime_error("Condition: predicate is null");
         }
+        return predicate_;
+    }
 
-    private:
     Predicate *predicate_;
     Condition *left_;
     std::string logical_op_;
     Condition *right_;
-
-
 };
-
-
 
 class Where {
     /*
-    ** Where is a binary tree of condition. Root node = last logical combination.
+    ** Where is a binary tree of condition. Root node = last logical
+    *combination.
     */
     public:
-        Where() { }
-        Where(Condition *root):
-            root_(root)
-        { }
+    Where() : root_(nullptr) {}
+    Where(Condition *root) : root_(root) {}
 
     private:
     Condition *root_;
     friend std::ostream &operator<<(std::ostream &os, const Where *w) {
         Condition *current = w->root_;
+        if (current == nullptr) {
+            throw std::runtime_error("Root condition is null");
+        }
         if (current->predicate() != nullptr) {
             os << current->predicate();
         }
         return os;
     }
-
 };
 
 class Query {
 
     public:
-    Query() : select(nullptr), from(nullptr) {}
+    Query() : select(nullptr), from(nullptr), where(nullptr) {}
     Select *select;
     From *from;
     Where *where;
 
     private:
-
     friend std::ostream &operator<<(std::ostream &os, const Query *q) {
         os << "{\n";
         os << "\"Select\":";
@@ -243,7 +236,9 @@ class Query {
         os << "\"From\":";
         os << q->from;
         os << "\"Where\":";
-        os << q->where;
+        if (q->where != nullptr) {
+            os << q->where;
+        }
         os << "}\n";
         return os;
     }

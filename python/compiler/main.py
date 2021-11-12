@@ -1,9 +1,19 @@
-from compiler.parser.parser import Parser
+from compiler.parser import Parser
 import re
+
+from pprint import pprint
 
 
 p = Parser()
-print(p.parse("'abcd'"))
+pprint(p.parse("""
+/* comment
+*
+*/
+
+  42;
+
+"hello";
+"""))
 
 # pattern = re.compile('"[^"]*"')
 # match = pattern.match('"abcd"')

@@ -32,13 +32,60 @@ class Parser:
     def Program(self):
         """Main entrypoint.
         Program
-                :Literal
+                :StatementList
         ;
         """
+        if self._lookahead is None:
+            return {
+                "type": "Program",
+                "body": ""
+            }
         return {
             "type": "Program",
-            "body": self.Literal()
+            "body": self.StatementList()
         }
+
+    def StatementList(self):
+        """
+        StatementList
+            : Statement
+            | StatementList Statement
+            ;
+        """
+        statement_list = [self.Statement()]
+        while self._lookahead is not None:
+            statement_list.append(self.Statement())
+        return statement_list
+
+    def Statement(self):
+        """
+        Statement
+            : ExpressionStatement
+            | BlockStatement
+            ;
+        """
+        return self.ExpressionStatement()
+
+    def ExpressionStatement(self):
+        """
+        ExpressionStatement
+            : Expression ;
+            ;
+        """
+        expression = self.Expression()
+        self._eat(';')
+        return {
+            "type": "ExpressionStatement",
+            "value": expression
+        }
+
+    def Expression(self):
+        """
+        Expression:
+            : Literal
+            ;
+        """
+        return self.Literal()
 
     def Literal(self):
         """Literal

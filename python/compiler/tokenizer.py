@@ -4,7 +4,16 @@ from typing import List, Tuple, Any
 
 
 TokenizerTraits = [
+    # Whitespaces
+    ("^\s+", "NULL"),
+    # Comment
+    ("^\/\/.*", "NULL"),
+    ("^\/*[\s\S]*?\*\/", "NULL"),
+    # Delimiters
+    ("^;", ";"),
+    # Numbers
     ("^\d+", "NUMBER"),
+    # Strings
     ("^\"[^\"]*\"", "STRING"),
     ("^'[^']*'", "STRING")
 ]
@@ -27,12 +36,14 @@ class Tokenizer:
             return None
         string = self._string[self._cursor:]
         for elem in self._traits:
-            print(elem)
             token_value = self._match(elem[0], string)
+            token_type = elem[1]
             if token_value is None:
                 continue
+            if token_type == "NULL":
+                return self.next_token()
             return {
-                "type": elem[1],
+                "type": token_type,
                 "value": token_value
             }
 

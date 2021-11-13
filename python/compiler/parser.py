@@ -1,15 +1,22 @@
 from .tokenizer import Tokenizer
+from .ast import DefaultFactory, SExpressionFactory
 
 __all__ = ("Parser",)
 
 
 class Parser:
-    """Recursive decent parser.
-    """
+    """Recursive decent parser."""
 
-    def __init__(self,):
+    def __init__(self, ast_mode: str = "default"):
         self._string = ""
         self._lookahead = None
+        self._factory = None
+        if ast_mode == "default":
+            self._factory = DefaultFactory()
+        elif ast_mode == "sexpression":
+            self._factory = SExpressionFactory()
+        else:
+            raise ValueError("unkown ast mode")
         self._tokenizer = Tokenizer()
 
     def parse(self, string: str):
@@ -36,16 +43,10 @@ class Parser:
         ;
         """
         if self._lookahead is None:
-            return {
-                "type": "Program",
-                "body": ""
-            }
-        return {
-            "type": "Program",
-            "body": self.StatementList()
-        }
+            return self._factory.Program("")
+        return self._factory.Program(self.StatementList())
 
-    def StatementList(self):
+    def StatementList(self, stop_lookahead = None):
         """
         StatementList
             : Statement
@@ -53,7 +54,7 @@ class Parser:
             ;
         """
         statement_list = [self.Statement()]
-        while self._lookahead is not None:
+        while (self._lookahead is not None) and (self._lookahead["type"] != stop_lookahead):
             statement_list.append(self.Statement())
         return statement_list
 
@@ -64,7 +65,20 @@ class Parser:
             | BlockStatement
             ;
         """
+        if self._lookahead["type"] == "{":
+            return self.BlockStatement()
         return self.ExpressionStatement()
+
+    def BlockStatement(self):
+        """
+        BlockStatement
+            : '{' OptStatementList '}'
+            ;
+        """
+        self._eat("{")
+        body = self.StatementList(stop_lookahead='}') if self._lookahead["type"] != '}' else []
+        self._eat("}")
+        return self._factory.BlockStatement(body)
 
     def ExpressionStatement(self):
         """
@@ -74,10 +88,7 @@ class Parser:
         """
         expression = self.Expression()
         self._eat(';')
-        return {
-            "type": "ExpressionStatement",
-            "value": expression
-        }
+        return self._factory.ExpressionStatement(expression)
 
     def Expression(self):
         """
@@ -105,10 +116,7 @@ class Parser:
                 ;
         """
         token = self._eat("NUMBER")
-        return {
-            "type": "NumericLiteral",
-            "value": int(token["value"])
-        }
+        return self._factory.NumericLiteral(int(token["value"]))
 
     def StringLiteral(self):
         """StringLiteral
@@ -116,7 +124,4 @@ class Parser:
                 ;
         """
         token = self._eat("STRING")
-        return {
-            "type": "StringLiteral",
-            "value": str(token["value"])
-        }
+        return self._factory.StringLiteral(str(token["value"]))

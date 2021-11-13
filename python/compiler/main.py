@@ -4,17 +4,13 @@ import re
 from pprint import pprint
 
 
-p = Parser()
+p = Parser(ast_mode="sexpression")
 pprint(p.parse("""
-/* comment
-*
-*/
-
-  42;
-
-"hello";
+432;
+"abcd";
 """))
 
-# pattern = re.compile('"[^"]*"')
+# pattern = re.compile('"([^"]*)"')
 # match = pattern.match('"abcd"')
-# print(match)
+# print(match.group(1))
+# print(len(match.groups()))

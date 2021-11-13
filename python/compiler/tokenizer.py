@@ -5,17 +5,19 @@ from typing import List, Tuple, Any
 
 TokenizerTraits = [
     # Whitespaces
-    ("^\s+", "NULL"),
+    (r"^\s+", "NULL"),
     # Comment
-    ("^\/\/.*", "NULL"),
-    ("^\/*[\s\S]*?\*\/", "NULL"),
-    # Delimiters
-    ("^;", ";"),
+    (r"^\/\/.*", "NULL"),
+    (r"^\/*[\s\S]*?\*\/", "NULL"),
+    # Delimiters, Special symbols
+    (r"^;", ";"),
+    (r"^\{", "{"),
+    (r"^\}", "}"),
     # Numbers
-    ("^\d+", "NUMBER"),
+    (r"^\d+", "NUMBER"),
     # Strings
-    ("^\"[^\"]*\"", "STRING"),
-    ("^'[^']*'", "STRING")
+    (r"^\"([^\"]*)\"", "STRING"),
+    (r"^'([^']*)'", "STRING")
 ]
 
 
@@ -52,7 +54,10 @@ class Tokenizer:
         match = pattern.match(string)
         value = None
         if match is not None:
-            value = match.group()
+            if len(match.groups()) > 0:
+                value = match.group(1)
+            else: 
+                value = match.group()
             self._cursor += match.span()[-1]
         return value
 

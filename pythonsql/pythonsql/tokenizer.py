@@ -5,34 +5,24 @@ from typing import List, Tuple, Any
 
 TokenizerTraits = [
     # Whitespaces
-    (r"^\s+", "NULL"),
+    (r"^\s+", "NULL_TOKEN"),
     # Comment
-    (r"^\/\/.*", "NULL"),
-    (r"^\/*[\s\S]*?\*\/", "NULL"),
-    # Numbers
-    (r"^\d+", "NUMBER"),
-    # Strings
-    (r"^\"([^\"]*)\"", "STRING"),
-    (r"^'([^']*)'", "STRING"),
-    # Delimiters, Special symbols
-    (r"^;", ";"),
-    (r"^\{", "{"),
-    (r"^\}", "}"),
-    (r"^\(", "("),
-    (r"^\)", ")"),
-    # Identifiers
-    (r"^\w+", "IDENTIFIER"),
-    # Asignments operators: =, +=, -=, *=, /=
-    (r"^=", "SIMPLE_ASSIGNMENT"),
-    (r"^[\+\-\*\/]=", "COMPLEX_ASSIGNMENT"),
-    # Math operators
-    (r"^[+\-]", "ADDITIVE_OPERATOR"),
-    (r"^[\*\\]", "MULTIPLICATIVE_OPERATOR"),
+    (r"^\/\/.*", "NULL_TOKEN"),
+    (r"^\/*[\s\S]*?\*\/", "NULL_TOKEN"),
+    # SELECT
+    (r"^(?i:select)", "SELECT"),
+    # FROM
+    (r"^(?i:from)", "FROM"),
+    # WHERE
+    (r"^(?i:where)", "WHERE"),
+    # GROUP BY
+    (r"^(?i:group by)", "GROUPBY")
 ]
 
 
 class Tokenizer:
 
+    # TODO parameterize this depending on the syntax (MySQL, PSQL etc.)
     QUOTES = "\"\'"
 
     def __init__(self, traits: List[Tuple] = None):
@@ -51,13 +41,12 @@ class Tokenizer:
             token_type = elem[1]
             if token_value is None:
                 continue
-            if token_type == "NULL":
+            if token_type == "NULL_TOKEN":
                 return self.next_token()
             return {
                 "type": token_type,
                 "value": token_value
             }
-        raise ValueError("Unexpected token: %s" % string)
 
     def _match(self, regex: str, string: str) -> Any:
         pattern = re.compile(regex)

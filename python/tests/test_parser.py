@@ -4,7 +4,6 @@ from compiler.parser import Parser
 
 
 class TestParser(unittest.TestCase):
-
     def setUp(self):
         self.parser = Parser()
 
@@ -28,9 +27,10 @@ class TestParser(unittest.TestCase):
             "body": [
                 {
                     "type": "ExpressionStatement",
-                    "value": {"type": "NumericLiteral", "value": 1234}
+                    "expression": {"type": "NumericLiteral", "value": 1234},
                 }
-            ]}
+            ],
+        }
 
     def test_string_literal_double_quotes(self):
         prog = """
@@ -42,9 +42,10 @@ class TestParser(unittest.TestCase):
             "body": [
                 {
                     "type": "ExpressionStatement",
-                    "value": {"type": "StringLiteral", "value": "abcd"}
+                    "expression": {"type": "StringLiteral", "value": "abcd"},
                 }
-            ]}
+            ],
+        }
 
     def test_string_literal_single_quotes(self):
         prog = """
@@ -56,10 +57,10 @@ class TestParser(unittest.TestCase):
             "body": [
                 {
                     "type": "ExpressionStatement",
-                    "value": {"type": "StringLiteral", "value": "abcd"}
+                    "expression": {"type": "StringLiteral", "value": "abcd"},
                 }
-            ]}
-
+            ],
+        }
 
     def test_block(self):
         prog = """
@@ -77,15 +78,15 @@ class TestParser(unittest.TestCase):
                     "body": [
                         {
                             "type": "ExpressionStatement",
-                            "value": {"type": "NumericLiteral", "value": 1234}
+                            "expression": {"type": "NumericLiteral", "value": 1234},
                         },
                         {
                             "type": "ExpressionStatement",
-                            "value": {"type": "StringLiteral", "value": "abcd"}
-                        }
-                    ]
+                            "expression": {"type": "StringLiteral", "value": "abcd"},
+                        },
+                    ],
                 }
-            ]
+            ],
         }
 
     def test_block_empty(self):
@@ -96,15 +97,8 @@ class TestParser(unittest.TestCase):
         ret = self.parser.parse(prog)
         assert ret == {
             "type": "Program",
-            "body": [
-                {
-                    "type": "BlockStatement",
-                    "body": [
-                    ]
-                }
-            ]
+            "body": [{"type": "BlockStatement", "body": []}],
         }
-
 
     def test_nested_blocks(self):
         prog = """
@@ -125,19 +119,273 @@ class TestParser(unittest.TestCase):
                     "body": [
                         {
                             "type": "ExpressionStatement",
-                            "value": {"type": "NumericLiteral", "value": 1234}
+                            "expression": {"type": "NumericLiteral", "value": 1234},
                         },
                         {
                             "type": "BlockStatement",
                             "body": [
                                 {
                                     "type": "ExpressionStatement",
-                                    "value": {"type": "StringLiteral", "value": "abcd"}
+                                    "expression": {
+                                        "type": "StringLiteral",
+                                        "value": "abcd",
+                                    },
                                 },
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+
+    def test_binary_expression_sum(self):
+        prog = """
+        2 + 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "+",
+                        "left": {"type": "NumericLiteral", "value": 2},
+                        "right": {"type": "NumericLiteral", "value": 2},
+                    },
+                }
+            ],
+        }
+
+    def test_binary_expression_sum_left_association(self):
+        # left to right arithmetics
+        prog = """
+        1 + 2 - 3;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "-",
+                        "left": {
+                            "type": "BinaryExpression",
+                            "operator": "+",
+                            "left": {"type": "NumericLiteral", "value": 1},
+                            "right": {"type": "NumericLiteral", "value": 2},
+                        },
+                        "right": {"type": "NumericLiteral", "value": 3},
+                    },
+                }
+            ],
+        }
+
+    def test_binary_expression_multiplication(self):
+        prog = """
+        2 * 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "*",
+                        "left": {"type": "NumericLiteral", "value": 2},
+                        "right": {"type": "NumericLiteral", "value": 2},
+                    },
+                }
+            ],
+        }
+
+    def test_binary_expression_multiplication_left_association(self):
+        prog = """
+        2 * 2 * 3;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "*",
+                        "left": {
+                            "type": "BinaryExpression",
+                            "operator": "*",
+                            "left": {"type": "NumericLiteral", "value": 2},
+                            "right": {"type": "NumericLiteral", "value": 2},
+                        },
+                        "right": {"type": "NumericLiteral", "value": 3},
+                    },
+                }
+            ],
+        }
+
+    def test_binary_expression_multiplication_precedence(self):
+        prog = """
+        2 + 2 * 3;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "+",
+                        "left": {
+                            "type": "NumericLiteral",
+                            "value": 2
+                        },
+                        "right": {
+                            "type": "BinaryExpression",
+                            "operator": "*",
+                            "left": {"type": "NumericLiteral", "value": 2},
+                            "right": {"type": "NumericLiteral", "value": 3}
+                        },
+                    },
+                }
+            ],
+        }
+
+    def test_primary_expression_parenthesis_literal(self):
+        prog = """
+        (2);
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "NumericLiteral",
+                        "value": 2
+                    }
                 }
             ]
         }
-        
+
+    def test_primary_expression_parenthesis_expression(self):
+        prog = """
+        (2 + 2);
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "+",
+                        "left": {"type": "NumericLiteral", "value": 2},
+                        "right": {"type": "NumericLiteral", "value": 2}
+                    }
+                }
+            ]
+        }
+
+    def test_binary_expression_parenthesis_precedence(self):
+        prog = """
+        (2 + 2) * 3;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "BinaryExpression",
+                        "operator": "*",
+                        "left": {
+                            "type": "BinaryExpression",
+                            "operator": "+",
+                            "left": {"type": "NumericLiteral", "value": 2},
+                            "right": {"type": "NumericLiteral", "value": 2}
+                        },
+                        "right": {
+                            "type": "NumericLiteral",
+                            "value": 3
+                        }
+                    }
+                }
+            ]
+        }
+
+    def test_assignment(self):
+        prog = """
+        x = 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": {
+                            "type": "Identifier",
+                            "name": "x"
+                        },
+                        "right": {
+                            "type": "NumericLiteral",
+                            "value": 2
+                        }
+                    }
+                }
+            ]
+        }
+
+    def test_assignment_chained(self):
+        prog = """
+        x = y = 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": {
+                            "type": "Identifier",
+                            "name": "x"
+                        },
+                        "right": {
+                            "type": "AssignmentExpression",
+                            "operator": "=",
+                            "left": {
+                                "type": "Identifier",
+                                "name": "y"
+                            },
+                            "right": {
+                                "type": "NumericLiteral",
+                                "value": 2
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
+    def test_assignment_invalid_lhs(self):
+        prog = """
+        2 = 2;
+        """
+        with self.assertRaises(SyntaxError):
+            self.parser.parse(prog)

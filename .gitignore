@@ -2,3 +2,4 @@ build/
 *.pyc
 *.whl
 *.tar.gz
+.ccls-cache/

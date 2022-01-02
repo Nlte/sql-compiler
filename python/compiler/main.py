@@ -4,11 +4,9 @@ import re
 from pprint import pprint
 
 
-p = Parser(ast_mode="sexpression")
-pprint(p.parse("""
-432;
-"abcd";
-"""))
+# p = Parser(ast_mode="sexpression")
+p = Parser(ast_mode="default")
+pprint(p.parse("1 + 2 + 3;"))
 
 # pattern = re.compile('"([^"]*)"')
 # match = pattern.match('"abcd"')

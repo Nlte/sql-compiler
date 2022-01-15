@@ -389,3 +389,101 @@ class TestParser(unittest.TestCase):
         """
         with self.assertRaises(SyntaxError):
             self.parser.parse(prog)
+
+    def test_variable_declaration(self):
+        prog = """
+        let x = 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "VariableStatement",
+                    "declarations": [
+                        {
+                            "type": "VariableDeclaration",
+                            "id": {
+                                "type": "Identifier",
+                                "name": "x"
+                            },
+                            "init": {
+                                "type": "NumericLiteral",
+                                "value": 2
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+
+    def test_variable_declarations(self):
+        prog = """
+        let x, y = 2;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "VariableStatement",
+                    "declarations": [
+                        {
+                            "type": "VariableDeclaration",
+                            "id": {
+                                "type": "Identifier",
+                                "name": "x"
+                            },
+                            "init": {
+                                "type": "NumericLiteral",
+                                "value": 2
+                            }
+                        },
+                        {
+                            "type": "VariableDeclaration",
+                            "id": {
+                                "type": "Identifier",
+                                "name": "y"
+                            },
+                            "init": {
+                                "type": "NumericLiteral",
+                                "value": 2
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+    def test_variable_empty_declarations(self):
+        prog = """
+        let x, y;
+        """
+        ret = self.parser.parse(prog)
+        assert ret == {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "VariableStatement",
+                    "declarations": [
+                        {
+                            "type": "VariableDeclaration",
+                            "id": {
+                                "type": "Identifier",
+                                "name": "x"
+                            },
+                            "init": "null"
+                        },
+                        {
+                            "type": "VariableDeclaration",
+                            "id": {
+                                "type": "Identifier",
+                                "name": "y"
+                            },
+                            "init": "null"
+                        }
+                    ]
+                }
+            ]
+        }

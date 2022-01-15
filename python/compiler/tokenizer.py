@@ -20,6 +20,8 @@ TokenizerTraits = [
     (r"^\}", "}"),
     (r"^\(", "("),
     (r"^\)", ")"),
+    # Keywords
+    (r"^let", "LET"),
     # Identifiers
     (r"^\w+", "IDENTIFIER"),
     # Asignments operators: =, +=, -=, *=, /=

@@ -1,10 +1,15 @@
-from pythonsql.tokenizer import Tokenizer
+import logging
 
+from pythonsql.tokenizer import Tokenizer
+from pythonsql.parser import Parser
+
+
+logging.basicConfig(level="DEBUG")
 
 def main():
-    t = Tokenizer()
-    t.init("""
-    SELECT
+    p = Parser()
+    ret = p.parse("""
+        SELECT col1
+        FROM table1
     """)
-    ret = t.next_token()
     print(ret)

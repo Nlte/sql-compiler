@@ -4,11 +4,22 @@ from typing import List, Tuple, Any
 
 
 TokenizerTraits = [
-    # Whitespaces
+    # Whitespaces --------------------------------------------------------------
     (r"^\s+", "NULL_TOKEN"),
-    # Comment
+    # Comment ------------------------------------------------------------------
     (r"^\/\/.*", "NULL_TOKEN"),
     (r"^\/*[\s\S]*?\*\/", "NULL_TOKEN"),
+    # Numbers and strings ------------------------------------------------------
+    (r"^\d+", "NUMBER"),
+    (r"^\"([^\"]*)\"", "STRING"),
+    (r"^'([^']*)'", "STRING"),
+    # Delimiters, Special symbols ----------------------------------------------
+    (r"^,", ","),
+    (r"^\{", "{"),
+    (r"^\}", "}"),
+    (r"^\(", "("),
+    (r"^\)", ")"),
+    # Keywords -----------------------------------------------------------------
     # SELECT
     (r"^(?i:select)", "SELECT"),
     # FROM
@@ -16,7 +27,17 @@ TokenizerTraits = [
     # WHERE
     (r"^(?i:where)", "WHERE"),
     # GROUP BY
-    (r"^(?i:group by)", "GROUPBY")
+    (r"^(?i:group by)", "GROUPBY"),
+    # LIMIT
+    (r"^(?i:limit)", "LIMIT"),
+    # JOIN
+    (r"^(?i:join)", "JOIN"),
+    # INNER JOIN
+    (r"^(?i:inner join)", "INNER JOIN"),
+    # LEFT JOIN
+    (r"^(?i:left join)", "LEFT JOIN"),
+    # Identifiers --------------------------------------------------------------
+    (r"^\w+", "IDENTIFIER"),
 ]
 
 

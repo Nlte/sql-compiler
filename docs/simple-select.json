@@ -1,0 +1,41 @@
+{
+    "type": "statement",
+    "variant": "list",
+    "statement": [
+        {
+            "type": "statement",
+            "variant": "select",
+            "result": [
+                {
+                    "type": "identifier",
+                    "variant": "column",
+                    "name": "foo"
+                },
+                {
+                    "type": "identifier",
+                    "variant": "column",
+                    "name": "bar",
+                    "alias": "baz"
+                },
+                {
+                    "type": "literal",
+                    "variant": "decimal",
+                    "value": "1",
+                    "alias": "one"
+                }
+            ],
+            "from": {
+                "type": "identifier",
+                "variant": "table",
+                "name": "mytable"
+            },
+            "where": [
+                {
+                    "type": "literal",
+                    "variant": "decimal",
+                    "value": "1"
+                }
+            ]
+        }
+    ]
+}
